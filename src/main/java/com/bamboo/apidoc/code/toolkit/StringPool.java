@@ -1,7 +1,8 @@
 package com.bamboo.apidoc.code.toolkit;
 
 
-import org.springframework.core.io.support.ResourcePatternResolver;
+
+import org.springframework.util.ResourceUtils;
 
 /**
  * @Author: GuoQing
@@ -21,6 +22,7 @@ public interface StringPool {
     String DASH = "-";
     String DOLLAR = "$";
     String DOT = ".";
+    String DOT_TRA = "\\.";
     String DOTDOT = "..";
     String DOT_CLASS = ".class";
     String DOT_JAVA = ".java";
@@ -70,19 +72,14 @@ public interface StringPool {
     String DOLLAR_LEFT_BRACE = "${";
     String HASH_LEFT_BRACE = "#{";
     String CRLF = "\r\n";
-
     String HTML_NBSP = "&nbsp;";
     String HTML_AMP = "&amp";
     String HTML_QUOTE = "&quot;";
     String HTML_LT = "&lt;";
     String HTML_GT = "&gt;";
-
     String DATE_FORMAT_SIX = "yyyy-MM-dd hh:mm:ss";
-
-    String JSON_FILE_CLASS_PATH = "classpath:/apidoc/apidoc.json";
-
-
+    String JSON_PATH = "apidoc/apidoc.json";
+    String JSON_FILE_CLASS_PATH = ResourceUtils.CLASSPATH_URL_PREFIX + JSON_PATH;
     String[] EMPTY_ARRAY = new String[0];
-
     byte[] BYTES_NEW_LINE = StringPool.NEWLINE.getBytes();
 }

@@ -1,35 +1,13 @@
 package com.bamboo.apidoc.web;
 
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.bamboo.apidoc.annotation.Apidoc;
-import com.bamboo.apidoc.autoconfigure.ApidocProperties;
+
 import com.bamboo.apidoc.code.enums.Status;
 import com.bamboo.apidoc.code.model.Project;
 import com.bamboo.apidoc.code.model.ReturnMsg;
-import com.bamboo.apidoc.code.toolkit.FileUtil;
-import com.bamboo.apidoc.code.toolkit.StringPool;
-
-import com.bamboo.apidoc.extension.toolkit.PackageHelper;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
-import org.springframework.core.type.classreading.MetadataReaderFactory;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
-import org.springframework.core.type.filter.TypeFilter;
+import com.bamboo.apidoc.service.ApiDocService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.List;
 
 /**
  * @Author: GuoQing
@@ -39,95 +17,101 @@ import java.util.List;
 @Controller
 @RequestMapping("bamboo")
 public class IndexController {
-    @Value("classpath:/apidoc/apidoc.json")
-    private Resource areaRes;
+    @Autowired
+    private ApiDocService apiDocService;
 
     /**
      * 跳转index界面
      *
-     * @return
+     * @return 返回
      */
     @GetMapping("index")
-    public String toIndex() throws IOException {
-        return "index";
+    public String toIndex() {
+        return "bamboo/apidoc/index";
     }
 
     /**
      * 跳转项目信息页面
      *
-     * @return
+     * @return 跳转项目信息界面
      */
     @GetMapping("project")
     public String toProject() {
-        return "project";
+        return "bamboo/apidoc/project";
     }
 
-
     /**
-     * 跳转项目信息页面
+     * 跳转文档界面
      *
-     * @return
+     * @return 跳转文档界面
      */
     @GetMapping("apidoc")
     public String toApidoc() {
-        return "apidoc";
+        return "bamboo/apidoc/apidoc";
     }
 
+    /**
+     * 跳转文档界面
+     *
+     * @return 跳转文档界面
+     */
+    @GetMapping("model")
+    public String toModel() {
+        return "bamboo/apidoc/model";
+    }
 
     /**
      * 获取JSON数据
      *
-     * @return
-     * @throws IOException
+     * @return 返回JSON文件读取到的信息
      */
     @GetMapping("getJson")
     @ResponseBody
-    public ReturnMsg getJson() throws IOException {
-        Project project = JSON.parseObject(areaRes.getInputStream(), StandardCharsets.UTF_8, Project.class);
-        return new ReturnMsg(Status.SUCCESS, project);
+    public ReturnMsg getJson() {
+        return new ReturnMsg(Status.SUCCESS, Project.getProject());
     }
 
+    /**
+     * 修改项目信息接口
+     *
+     * @param project 项目信息
+     * @return 接口结果
+     */
     @PostMapping("updateProject")
     @ResponseBody
-    public ReturnMsg updateJson(@RequestBody Project project) throws IOException {
-        Project projec = JSON.parseObject(areaRes.getInputStream(), StandardCharsets.UTF_8, Project.class);
-        projec.setStartTime(StrUtil.isBlank(project.getStartTime()) ? DateUtil.format(new Date(), StringPool.DATE_FORMAT_SIX) : project.getStartTime());
-        projec.setDescription(project.getDescription());
-        projec.setName(project.getName());
-        projec.setStartFeatures(project.getStartFeatures());
-        com.bamboo.apidoc.code.toolkit.FileUtil.createJson(JSONObject.toJSON(projec), ApidocProperties.jsonFilePath);
-        return new ReturnMsg(Status.SUCCESS);
+    public ReturnMsg updateJson(@RequestBody Project project) {
+        return apiDocService.updateProject(project);
     }
 
-
-    @GetMapping("updateProject1")
+    /**
+     * 保存moldel
+     *
+     * @return 接口结果
+     */
+    @PostMapping("saveModel")
     @ResponseBody
-    public ReturnMsg updateJson1() throws IOException {
-        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory(resolver);
-        TypeFilter annotationTypeFilter = new AnnotationTypeFilter(Apidoc.class);
-        String path = ResourceUtils.getURL("classpath:").getPath();
-        System.out.println(path);
-        List<File> files = FileUtil.loopFiles(path);
-        for (File file : files) {
-
-            if ("class".equals(FileUtil.extName(file))) {
-                System.out.println("上级目录"+FileUtil.getAbsolutePath(file.getParent()));
-                String[] classes = FileUtil.getAbsolutePath(file.getParent()).split("classes");
-                if(classes!=null&&classes.length>1){
-                    for (String one : classes){
-                        Class<?>[] classes1 = PackageHelper.convertPackagePath(one);
-                        for ( Class classes11: classes1){
-                            System.out.println(classes11.getName());
-                        }
-                    }
-                }
-            }
+    public ReturnMsg saveModel(@RequestParam(required = false) String name, @RequestParam String description) {
+        return apiDocService.saveModel(name, description);
+    }
 
 
-
-        }
-
+    @GetMapping("updateProject")
+    @ResponseBody
+    public ReturnMsg updateJson(@RequestParam(required = false) int test) {
         return new ReturnMsg(Status.SUCCESS);
     }
+
+    @GetMapping("getToString")
+    @ResponseBody
+    public ReturnMsg getToString(@RequestBody Object o) {
+        return new ReturnMsg(Status.SUCCESS);
+    }
+
+    @GetMapping("getToString/{test}")
+    @ResponseBody
+    public ReturnMsg getToString(@PathVariable String test) {
+        return new ReturnMsg(Status.SUCCESS);
+    }
+
+
 }

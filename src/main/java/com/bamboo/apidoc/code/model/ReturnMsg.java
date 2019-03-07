@@ -3,13 +3,12 @@ package com.bamboo.apidoc.code.model;
 import com.bamboo.apidoc.code.enums.Status;
 import lombok.Data;
 import org.springframework.http.HttpStatus;
-
 import java.io.Serializable;
 
 /**
  * @Author: GuoQing
  * @Date: 2019/2/26 10:42
- * @description 接口返回
+ * @description 接口统一返回对象
  */
 @Data
 public class ReturnMsg implements Serializable {
@@ -18,7 +17,7 @@ public class ReturnMsg implements Serializable {
     private String msg;
     private Object result;
 
-    public ReturnMsg(int status, String msg, Object result) {
+    public ReturnMsg(long status, String msg, Object result) {
         this.status = status;
         this.msg = msg;
         this.result = result;
