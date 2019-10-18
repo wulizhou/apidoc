@@ -5,6 +5,7 @@
     .read-only input {
         border: 0px;
     }
+
     .el-menu-item, .el-submenu__title {
         height: 100%;
     }
@@ -13,42 +14,45 @@
     <el-row :gutter="24">
         <el-col :span="2">
             <div class="grid-content bg-purple">
-                <el-aside style="overflow:none!important;">
-                    <el-menu style="border:none !important;overflow-y:none" v-if="project!=null"
-                             default-active="2"
-                             class="el-menu-vertical-demo">
-                        <el-submenu v-for="(apidoc, index) in project.modules" :index="index">
-                            <template slot="title">
-                                <span>{{apidoc.name}}</span>
-                            </template>
-                            <el-menu-item-group v-for="(method, index) in apidoc.methods">
-                                <el-menu-item :index="method.methodInfo.methodBasic.routPaths"
-                                              @click="currentApiInfo(method,apidoc.name)">
-                                    <el-row>
-                                        <el-col v-if="method.methodInfo.methodBasic.chineseName==null" :span="20">
-                                            <template v-for="url in method.methodInfo.methodBasic.routPaths">
+                <el-menu style="border:none !important;overflow-y:none" v-if="project!=null"
+                         default-active="2"
+                         class="el-menu-vertical-demo">
+                    <el-submenu v-for="(apidoc, index) in project.modules" :index="index">
+                        <template slot="title">
+                            <i class="el-icon-menu"></i>
+                            <span>{{apidoc.name}}</span>
+                        </template>
+                        <el-menu-item-group v-for="(method, index) in project.methods"
+                                            v-if="method.methodInfo.modelId==apidoc.id">
+                            <el-menu-item :index="method.methodInfo.methodBasic.routPaths"
+                                          @click="currentApiInfo(method)">
+                                <el-row>
+                                    <el-col v-if="method.methodInfo.methodBasic.chineseName==null||method.methodInfo.methodBasic.chineseName==''"
+                                            :span="20">
+                                        <template v-for="url in method.methodInfo.methodBasic.routPaths">
+                                            <el-col :span="2"
+                                                    v-if="checkVersion!=method.checkVersion && method.methodMark.change">
+                                                <span style="color: #E6A23C">  {{url}}</span>
+                                            </el-col>
+                                            <el-col :span="2" v-else-if="method.methodMark.change">
+                                                <span style="color: #E6A23C">  {{url}}</span>
+                                            </el-col>
+                                            <el-col :span="2" v-else-if="checkVersion!=method.checkVersion">
+                                                <span style="color: #E6A23C">{{url}}</span>
+                                            </el-col>
+                                            <el-col :span="2" v-else>
                                                 {{url}}
-                                            </template>
-                                        </el-col>
-                                        <el-col v-else :span="20">
-                                            {{method.methodInfo.methodBasic.chineseName}}
-                                        </el-col>
-                                        <el-col :span="2"
-                                                v-if="checkVersion!=method.checkVersion && method.methodMark.change">
-                                            <el-badge value="改动/不存在" class="item" type="warning"></el-badge>
-                                        </el-col>
-                                        <el-col :span="2" v-else-if="method.methodMark.change">
-                                            <el-badge value="改动" class="item" type="warning"></el-badge>
-                                        </el-col>
-                                        <el-col :span="2" v-else-if="checkVersion!=method.checkVersion">
-                                            <el-badge value="不存在" class="item" type="warning"></el-badge>
-                                        </el-col>
-                                    </el-row>
-                                </el-menu-item>
-                            </el-menu-item-group>
-                        </el-submenu>
-                    </el-menu>
-                </el-aside>
+                                            </el-col>
+                                        </template>
+                                    </el-col>
+                                    <el-col v-else :span="20">
+                                        {{method.methodInfo.methodBasic.chineseName}}
+                                    </el-col>
+                                </el-row>
+                            </el-menu-item>
+                        </el-menu-item-group>
+                    </el-submenu>
+                </el-menu>
             </div>
         </el-col>
         <el-col :span="18" :offset="2" v-if="currentApi!=null">
@@ -81,21 +85,21 @@
                             </template>
                         </el-form-item>
                         <el-form-item label="所在模块:">
-                            <el-select v-if="edit.flag" v-model="currentModel" placeholder="请选择">
+                            <el-select v-if="edit.flag" v-model="currentApi.methodInfo.modelId" placeholder="请选择">
                                 <el-option
                                         v-for="item in project.modules"
-                                        :key="item.name"
+                                        :key="item.id"
                                         :label="item.name"
-                                        :value="item.name">
+                                        :value="item.id">
                                 </el-option>
                             </el-select>
                             <el-input v-else readonly="true" class="read-only"
                                       placeholder="请输入接口名称"
-                                      v-model="currentModel">
+                                      v-model="getCurrentModel()">
                             </el-input>
                         </el-form-item>
 
-                        <el-form-item label="接口说明:">
+                        <el-form-item label="参数说明:">
                             <div class="table-responsive">
                                 <table class="table table-hover table-bordered">
                                     <tr>
@@ -130,6 +134,9 @@
                                       v-model="currentApi.methodInfo.methodBasic.description">
                             </el-input>
                         </el-form-item>
+                        <el-form-item v-if="edit.flag">
+                            <el-button type="primary" @click="save()">保存</el-button>
+                        </el-form-item>
                     </el-form>
                 </div>
             </el-main>
@@ -144,7 +151,6 @@
             return {
                 project: null,
                 currentApi: null,
-                currentModel: '',
                 checkVersion: '',
                 edit: {
                     flag: false,
@@ -154,6 +160,23 @@
             }
         },
         methods: {
+            save() {
+                var _this = this;
+                $.ajax({
+                    type: "post",
+                    url: '/bamboo/saveApi',
+                    dataType: "json",
+                    data: JSON.stringify(_this.currentApi),
+                    contentType: "application/json",
+                    success: function (data) {
+                        console.log(data);
+                    },
+                    error: function (data) {
+                        console.log(data);
+                    }
+                });
+
+            },
             modeSwitching() {
                 let _this = this;
                 if (_this.edit.flag) {
@@ -163,11 +186,9 @@
                     _this.edit.flag = true;
                     _this.edit.text = '查看';
                 }
-            }, currentApiInfo(apiInfo, modelName) {
+            }, currentApiInfo(apiInfo) {
                 let _this = this;
                 _this.currentApi = apiInfo;
-                console.log(modelName)
-                _this.currentModel = modelName;
             }, getJson() {
                 let _this = this;
                 axios({
@@ -177,15 +198,27 @@
                     responseType: 'json',
                     transformResponse: [function (data) {
                         _this.project = data.result;
-                        console.log(_this.project)
                         _this.checkVersion = data.result.largeVersion + '.' + data.result.smallVersion;
                         return data;
                     }]
                 })
+            }, getCurrentModel() {
+                let _this = this;
+                let modes = _this.project.modules;
+                for (let i = 0; i < modes.length; i++) {
+                    if (modes[i].id == _this.currentApi.methodInfo.modelId) {
+                        return modes[i].name;
+                    }
+                }
             }
-        }, mounted: function () {
+        },
+        mounted: function () {
             this.getJson();
+
         }
-    });
+    })
+    ;
+
+
 </script>
 </@html>

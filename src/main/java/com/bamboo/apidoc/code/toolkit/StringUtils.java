@@ -12,6 +12,7 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import java.io.FileNotFoundException;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * @Author: GuoQing
@@ -20,75 +21,70 @@ import java.util.Set;
  */
 public class StringUtils extends StrUtil {
 
-    /**
-     * 为字符串指定特定的字符开头
-     *
-     * @param prefix 字符串
-     * @return 处理过的String
-     */
-    static String startsWith(String prefix) {
-        String pre = "";
-        if (prefix == null) {
-            return pre;
-        }
-        if (!prefix.startsWith(StringPool.SLASH)) {
-            pre = StringPool.SLASH + prefix;
-        } else {
-            pre = prefix;
-        }
-        return pre;
+  /**
+   * 为字符串指定特定的字符开头
+   *
+   * @param prefix 字符串
+   * @return 处理过的String
+   */
+  static String startsWith(String prefix) {
+    String pre = "";
+    if (prefix == null) {
+      return pre;
     }
-
-
-    public static String patternsSplice(Map.Entry<RequestMappingInfo, HandlerMethod> requestMappingInfoHandlerMethodEntry) {
-        MethodBasic methodBasic = MethodBasic.buildMethodBasic(requestMappingInfoHandlerMethodEntry.getKey(), requestMappingInfoHandlerMethodEntry.getValue());
-        return patternsSplice(methodBasic);
+    if (!prefix.startsWith(StringPool.SLASH)) {
+      pre = StringPool.SLASH + prefix;
+    } else {
+      pre = prefix;
     }
+    return pre;
+  }
 
-    public static String patternsSplice(MethodBasic methodBasic) {
-        Set<RequestMethod> methodTypes = methodBasic.getMethodTypes();
-        String name = methodBasic.getName();
-        String className = methodBasic.getClassName();
-        Set<String> routPaths = methodBasic.getRoutPaths();
-        return patternsSplice(routPaths, methodTypes, className, name);
+
+  public static String patternsSplice(Map.Entry<RequestMappingInfo, HandlerMethod> rem) {
+    MethodBasic methodBasic = MethodBasic.buildMethodBasic(rem.getKey(), rem.getValue());
+    return patternsSplice(methodBasic);
+  }
+
+  public static String patternsSplice(MethodBasic methodBasic) {
+    Set<RequestMethod> methodTypes = methodBasic.getMethodTypes();
+    Set<String> routPaths = methodBasic.getRoutPaths();
+    return patternsSplice(routPaths, methodTypes);
+  }
+
+  public static String patternsSplice(Set<String> routPaths, Set<RequestMethod> methodTypes) {
+    StringBuilder url = new StringBuilder();
+    if (routPaths != null && routPaths.size() > 0) {
+      for (String urls : routPaths) {
+        url.append(urls);
+        url.append(",");
+      }
     }
-
-    public static String patternsSplice(Set<String> routPaths, Set<RequestMethod> methodTypes, String className, String name) {
-        StringBuilder url = new StringBuilder();
-        if (routPaths != null && routPaths.size() > 0) {
-            for (String urls : routPaths) {
-                url.append(urls);
-                url.append(",");
-            }
-        }
-        if (methodTypes != null && methodTypes.size() > 0) {
-            for (RequestMethod requestMethod : methodTypes) {
-                url.append(requestMethod.toString());
-                url.append(",");
-            }
-        }
-        if (StrUtil.isNotBlank(className)) {
-            url.append(className);
-        }
-        if (StrUtil.isNotBlank(name)) {
-            url.append(name);
-        }
-        return url.toString();
+    if (methodTypes != null && methodTypes.size() > 0) {
+      for (RequestMethod requestMethod : methodTypes) {
+        url.append(requestMethod.toString());
+        url.append(",");
+      }
     }
+    return url.toString();
+  }
 
 
-    /**
-     * 获取JSON文件地址
-     *
-     * @return JSON文件地址
-     */
-    public static String getJsonPath() {
-        String jsonpath = "";
-        try {
-            jsonpath = ResourceUtils.getURL("classpath:").getPath() + StringPool.JSON_PATH;
-        } catch (FileNotFoundException e) {
-            throw new ApiDocException("获取Json文件地址失败 错误信息为" + e);
-        }
-        return jsonpath;
-    }
+  /**
+   * 获取JSON文件地址
+   *
+   * @return JSON文件地址
+   */
+  public static String getJsonPath() {
+    return (System.getProperty("user.dir") + "/src/main/resources/" + StringPool.JSON_PATH).replace("\\", "/");
+  }
+
+  /**
+   * 获取UUID
+   *
+   * @return 返回生成的UUID
+   */
+  public static String getUUID() {
+    return UUID.randomUUID().toString();
+  }
 }

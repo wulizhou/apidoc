@@ -33,7 +33,7 @@
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li><a href="/bamboo/apidoc">API文档</a></li>
-                    <li><a href="/bamboo/project">统计图</a></li>
+                    <li><a href="/bamboo/statistics">统计图</a></li>
                     <li><a href="/bamboo/model">模块管理</a></li>
                     <li><a href="/bamboo/user">成员管理</a></li>
                     <li><a href="/bamboo/project">项目信息</a></li>
@@ -42,8 +42,12 @@
                     <div class="form-group">
                         <input type="text" class="form-control" placeholder="Search">
                     </div>
+                    <template v-if="window.location.href.split('/')[window.location.href.split('/').length-1]=='apidoc'" >
+                        <button type="button"  v-model="edit"  v-if="edit.flag"  class="btn btn-default" @click="save()" >保存</button>
+                    </template>
                     <button type="button" class="btn btn-default" v-model="edit" @click="modeSwitching" >{{edit.text}}</button>
                     <button type="button" v-if="window.location.href.split('/')[window.location.href.split('/').length-1]=='model'" class="btn btn-default" @click="addModel" >新增</button>
+
                 </form>
             </div>
         </div>
